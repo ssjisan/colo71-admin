@@ -173,6 +173,8 @@ const isMarkActive = (editor, format) => {
   return marks ? marks[format] === true : false;
 };
 
+// Allign Functions
+
 const toggleAlign = (editor, format) => {
   const isActive = isAlignActive(editor, format);
 
@@ -183,6 +185,46 @@ const toggleAlign = (editor, format) => {
     { align: isActive ? undefined : format },
     { match: (n) => SlateElement.isElement(n) && Editor.isBlock(editor, n) },
   );
+};
+
+const toggleLink = (editor) => {
+  const selection = editor.selection;
+
+  if (!selection || Editor.string(editor, selection).length === 0) {
+    alert("Select the text you want to link or unlink.");
+    return;
+  }
+
+  // Check whether the selected text already contains a link
+  const existingLink =
+    Array.from(
+      Editor.nodes(editor, {
+        at: selection,
+        match: (node) => Text.isText(node) && Boolean(node.link),
+      }),
+    ).length > 0;
+
+  if (existingLink) {
+    // Remove the link from the selected text
+    Editor.removeMark(editor, "link");
+    return;
+  }
+
+  const url = window.prompt("Enter link URL:", "https://colo71.com");
+
+  if (!url) return;
+
+  const trimmedUrl = url.trim();
+
+  if (!/^(https?:\/\/|mailto:|tel:)/i.test(trimmedUrl)) {
+    alert("Enter a valid URL.");
+    return;
+  }
+
+  Editor.addMark(editor, "link", trimmedUrl);
+  Transforms.collapse(editor, { edge: "end" });
+  Editor.removeMark(editor, "link");
+  ReactEditor.focus(editor);
 };
 
 const isAlignActive = (editor, format) => {
@@ -251,6 +293,19 @@ const serialize = (node) => {
     if (node.bold) string = `<strong>${string}</strong>`;
     if (node.italic) string = `<em>${string}</em>`;
     if (node.underline) string = `<u>${string}</u>`;
+    if (node.link) {
+      const safeUrl = /^(https?:\/\/|mailto:|tel:)/i.test(node.link)
+        ? node.link
+        : "#";
+
+      const escapedUrl = safeUrl
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+      string = `<a href="${escapedUrl}">${string}</a>`;
+    }
     return string;
   }
 
@@ -384,6 +439,7 @@ export default function MyEditor({
         <EditorToolbar
           toggleMark={toggleMark}
           toggleBlock={toggleBlock}
+          toggleLink={toggleLink}
           editor={editor}
           toggleAlign={toggleAlign}
           handleImageUpload={handleImageUpload}
@@ -512,6 +568,29 @@ export default function MyEditor({
             if (leaf.bold) children = <strong>{children}</strong>;
             if (leaf.italic) children = <em>{children}</em>;
             if (leaf.underline) children = <u>{children}</u>;
+            if (leaf.link) {
+              children = (
+                <a
+                  href={leaf.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(event) => {
+                    event.preventDefault();
+
+                    if (/^(https?:\/\/|mailto:|tel:)/i.test(leaf.link)) {
+                      window.open(leaf.link, "_blank", "noopener,noreferrer");
+                    }
+                  }}
+                  style={{
+                    color: "#2192D0",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                  }}
+                >
+                  {children}
+                </a>
+              );
+            }
             return (
               <span {...attributes} style={{ whiteSpace: "pre-wrap" }}>
                 {children}

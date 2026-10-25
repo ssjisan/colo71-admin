@@ -481,6 +481,33 @@ export const EditorHeading6 = ({ size, color }) => {
   );
 };
 
+export const EditorLink = ({ size, color }) => {
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M13.768 10.2313C11.8745 8.3378 8.84025 8.28042 6.87768 10.0592L6.6969 10.2313L3.8685 13.0597C1.9158 15.0123 1.9158 18.1781 3.8685 20.1307C5.76193 22.0242 8.79615 22.0816 10.7587 20.3028L10.9395 20.1307L13.0608 18.0094C13.4514 17.6189 13.4514 16.9857 13.0608 16.5952C12.7003 16.2347 12.1332 16.207 11.7408 16.512L11.6466 16.5952L9.5253 18.7165C8.3537 19.8881 6.4542 19.8881 5.2827 18.7165C4.15796 17.5919 4.11297 15.7963 5.14773 14.6179L5.2827 14.4739L8.1111 11.6455C9.2827 10.4739 11.1821 10.4739 12.3536 11.6455C12.7442 12.036 13.3773 12.036 13.7679 11.6455C14.1584 11.255 14.1584 10.6218 13.768 10.2313ZM20.132 3.8673C18.2385 1.97385 15.2043 1.91647 13.2417 3.69517L13.0609 3.8673L10.9396 5.98862C10.5491 6.37914 10.5491 7.01231 10.9396 7.40284C11.3001 7.76332 11.8673 7.79105 12.2596 7.48602L12.3538 7.40284L14.4751 5.28151C15.6467 4.10994 17.5462 4.10994 18.7178 5.28151C19.8425 6.40622 19.8875 8.20179 18.8527 9.38016L18.7178 9.52415L15.8893 12.3526C14.7178 13.5242 12.8182 13.5241 11.6467 12.3526C11.2562 11.962 10.623 11.962 10.2325 12.3526C9.8419 12.7431 9.842 13.3763 10.2325 13.7668C12.1259 15.6602 15.1602 15.7176 17.1228 13.9389L17.3035 13.7668L20.132 10.9384C22.0846 8.98574 22.0846 5.81992 20.132 3.8673Z"
+          fill={color}
+        />
+      </svg>
+    </div>
+  );
+};
+
 EditorBold.propTypes = {
   color: PropTypes.string.isRequired,
   size: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
@@ -546,6 +573,10 @@ EditorHeading5.propTypes = {
   size: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 EditorHeading6.propTypes = {
+  color: PropTypes.string.isRequired,
+  size: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+};
+EditorLink.propTypes = {
   color: PropTypes.string.isRequired,
   size: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };

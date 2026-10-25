@@ -13,6 +13,7 @@ import {
   EditorItalic,
   EditorJustify,
   EditorLeft,
+  EditorLink,
   EditorListOrdered,
   EditorListUnordered,
   EditorQuote,
@@ -40,6 +41,7 @@ const getButtonStyle = (active) => ({
 export default function EditorToolbar({
   toggleMark,
   toggleBlock,
+  toggleLink,
   editor,
   toggleAlign,
   handleImageUpload,
@@ -210,7 +212,7 @@ export default function EditorToolbar({
         </IconButton>
       </Stack>
       <span style={{ borderLeft: "1px solid #ccc", margin: "0 8px" }} />
-      <Stack>
+      <Stack gap="4px" flexDirection="row">
         <IconButton
           sx={editorToolIconStyle}
           onClick={() => fileInputRef.current.click()}
@@ -231,6 +233,15 @@ export default function EditorToolbar({
             }}
           />
         </IconButton>
+        <IconButton
+          sx={getButtonStyle(isAlignActive(editor, "justify"))}
+          onMouseDown={(event) => {
+            event.preventDefault();
+            toggleLink(editor);
+          }}
+        >
+          <EditorLink size="16px" color="#1c252e" />
+        </IconButton>
       </Stack>
     </Stack>
   );
@@ -238,6 +249,7 @@ export default function EditorToolbar({
 EditorToolbar.propTypes = {
   toggleMark: PropTypes.func.isRequired,
   toggleBlock: PropTypes.func.isRequired,
+  toggleLink: PropTypes.func.isRequired,
   toggleAlign: PropTypes.func.isRequired,
   handleImageUpload: PropTypes.func.isRequired,
   editor: PropTypes.object.isRequired,

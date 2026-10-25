@@ -21,23 +21,22 @@ import Icon from "../../Icon";
 export default function InputFields() {
   const forBelow776 = useMediaQuery("(max-width:776px)");
 
-  const { showPassword, handleClickShowPassword, handleMouseDownPassword } =
-    useContext(DataContext);
-
-  const { setAuth } = useContext(DataContext);
+  const {
+    showPassword,
+    handleClickShowPassword,
+    handleMouseDownPassword,
+    setAuth,
+  } = useContext(DataContext);
 
   const [lockSeconds, setLockSeconds] = useState(0);
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   const navigate = useNavigate();
 
-  // ==================================================
-  // Lock timer
-  // ==================================================
-
+  // Account lock countdown
   useEffect(() => {
     if (lockSeconds <= 0) return;
 
@@ -55,14 +54,13 @@ export default function InputFields() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // ==================================================
   // Login
-  // ==================================================
-
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (!email || !password) {
+    if (loading || lockSeconds > 0) return;
+
+    if (!email.trim() || !password) {
       setErrorMessage("Email and password are required");
       return;
     }
@@ -72,16 +70,13 @@ export default function InputFields() {
       setErrorMessage("");
 
       const response = await API.post("/login", {
-        email,
+        email: email.trim(),
         password,
       });
 
       const data = response.data;
 
-      // ==================================================
-      // Password change required
-      // ==================================================
-
+      // Forced password change
       if (data?.success && data?.code === "PASSWORD_CHANGE_REQUIRED") {
         setAuth({
           user: null,
@@ -92,100 +87,51 @@ export default function InputFields() {
           data.message || "You must change your password before continuing.",
         );
 
-        navigate("/password-change");
-
+        navigate("/password-change", { replace: true });
         return;
       }
 
-      // ==================================================
-      // Normal login successful
-      // ==================================================
-
+      // Successful login
       if (data?.success && data?.code === "LOGIN_SUCCESS") {
         setAuth({
           user: data.user || null,
           permissions: data.permissions || [],
         });
 
-        toast.success("Login Successful");
-
-        navigate("/");
-
+        setPassword("");
+        toast.success("Login successful");
+        navigate("/", { replace: true });
         return;
       }
-
-      // ==================================================
-      // Unexpected successful response
-      // ==================================================
 
       setErrorMessage(data?.message || "Login failed. Please try again.");
     } catch (err) {
       const response = err.response;
+      const code = response?.data?.code;
 
-      // ==================================================
       // Account temporarily locked
-      // ==================================================
-
-      if (
-        response?.status === 423 &&
-        response?.data?.code === "ACCOUNT_TEMPORARILY_LOCKED"
-      ) {
+      if (response?.status === 423 && code === "ACCOUNT_TEMPORARILY_LOCKED") {
         const remainingSeconds = response.data.remainingSeconds || 300;
 
         setLockSeconds(remainingSeconds);
-
         setErrorMessage("Account locked. Please try again later.");
-
         return;
       }
 
-      // ==================================================
       // Account disabled
-      // ==================================================
-
-      if (
-        response?.status === 403 &&
-        response?.data?.code === "ACCOUNT_DISABLED"
-      ) {
+      if (response?.status === 403 && code === "ACCOUNT_DISABLED") {
         setErrorMessage(
           response.data.message ||
             "Your account has been disabled. Please contact an administrator.",
         );
-
         return;
       }
 
-      // ==================================================
-      // User not found
-      // ==================================================
-
-      if (
-        response?.status === 404 &&
-        response?.data?.code === "USER_NOT_FOUND"
-      ) {
-        setErrorMessage(
-          response.data.message || "No user found with this email.",
-        );
-
-        return;
-      }
-
-      // ==================================================
       // Invalid credentials
-      // ==================================================
-
-      if (
-        response?.status === 401 &&
-        response?.data?.code === "INVALID_CREDENTIALS"
-      ) {
+      if (response?.status === 401 && code === "INVALID_CREDENTIALS") {
         setErrorMessage(response.data.message || "Invalid email or password.");
-
         return;
       }
-
-      // ==================================================
-      // Fallback error
-      // ==================================================
 
       setErrorMessage(
         response?.data?.message || "Login failed. Please try again.",
@@ -266,7 +212,7 @@ export default function InputFields() {
               onChange={(e) => setEmail(e.target.value)}
               required
               inputProps={{
-                autoComplete: "email",
+                autoComplete: "username",
               }}
             />
 
@@ -288,6 +234,9 @@ export default function InputFields() {
                       onClick={handleClickShowPassword}
                       onMouseDown={handleMouseDownPassword}
                       edge="end"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                     >
                       {showPassword ? (
                         <Icon name="eyeon" color="#918EAF" size="24px" />
@@ -303,26 +252,21 @@ export default function InputFields() {
           </Stack>
 
           <Stack gap="16px">
-            <Stack
-              flexDirection="row"
-              justifyContent="flex-end"
-              alignItems="center"
+            <Typography
+              variant="body2"
+              onClick={() => navigate("/forgot-password")}
+              sx={{
+                cursor: "pointer",
+                color: "primary.main",
+                textDecoration: "none",
+                alignSelf: "flex-end",
+                "&:hover": {
+                  textDecoration: "underline",
+                },
+              }}
             >
-              <Typography
-                variant="body2"
-                onClick={() => navigate("/forgot-password")}
-                sx={{
-                  cursor: "pointer",
-                  color: "primary.main",
-                  textDecoration: "none",
-                  "&:hover": {
-                    textDecoration: "underline",
-                  },
-                }}
-              >
-                Forgot Password?
-              </Typography>
-            </Stack>
+              Forgot Password?
+            </Typography>
 
             <Button
               variant="contained"

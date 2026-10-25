@@ -20,6 +20,9 @@ import ChangePasswordForm from "../Components/User/ChangePasswordForm";
 import ForgotPassword from "../UserAuth/ForgotPassword";
 import VerifiyOtp from "../UserAuth/VerifiyOtp";
 import ResetPassword from "../UserAuth/ResetPassword";
+import BlogEditor from "../Page/Blog/BlogEditor";
+import ScheduleManagement from "../Page/ScheduleManagement/ScheduleManagement";
+import FacilityVisitRequests from "../Page/ScheduleManagement/FacilityVisitRequests";
 
 export default function MainRouters() {
   const { loading } = useContext(DataContext);
@@ -73,6 +76,19 @@ export default function MainRouters() {
               <Route path="/user-settings/:id" element={<UserSettings />} />
               {/* Backup */}
               <Route path="/backup" element={<Backup />} />
+              {/* BLogs */}
+              {/* <Route path="/blogs" element={<BlogList />} /> */}
+              <Route path="/create-blog" element={<BlogEditor />} />
+              <Route path="/create-blog/:id" element={<BlogEditor />} />
+              {/* Schedule */}
+              <Route
+                path="/schedule-management"
+                element={<ScheduleManagement />}
+              />
+              <Route
+                path="/requested-schedule"
+                element={<FacilityVisitRequests />}
+              />
             </Route>
           </Route>
         </Route>

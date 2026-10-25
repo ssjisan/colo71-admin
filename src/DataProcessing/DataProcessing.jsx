@@ -2,7 +2,6 @@ import { createContext } from "react";
 import PropTypes from "prop-types";
 import LoginForm from "./Components/LoginForm";
 import AuthProvider from "./Components/AuthProvider";
-import DashboardData from "./Components/DashboardData";
 
 export const DataContext = createContext();
 
@@ -19,17 +18,6 @@ export default function DataProcessing({ children }) {
     loginDetails,
   } = LoginForm();
 
-  const {
-    kpi,
-    statusDistribution,
-    monthlyTrend,
-    recentRequests,
-    packagePopularity,
-    insights,
-    dashboardLoading,
-    dashboardError,
-    refetchDashboard,
-  } = DashboardData();
   // -----------------------------------------------Login Controller End----------------------------------------------------- //
 
   // ----------------------------------------------- Video Controller Start --------------------------------------------- //
@@ -54,17 +42,6 @@ export default function DataProcessing({ children }) {
         setIsUserLoggedIn,
         handleLoginDetails,
         loginDetails,
-
-        //
-        kpi,
-        statusDistribution,
-        monthlyTrend,
-        recentRequests,
-        packagePopularity,
-        insights,
-        dashboardLoading,
-        dashboardError,
-        refetchDashboard,
       }}
     >
       {children}

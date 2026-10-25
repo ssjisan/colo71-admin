@@ -5,92 +5,62 @@ const API = axios.create({
   withCredentials: true,
 });
 
-// ==================================================
-// Response Interceptor
-// ==================================================
+let refreshPromise = null;
 
 API.interceptors.response.use(
   (response) => response,
 
   async (error) => {
     const originalRequest = error.config;
-
     const status = error.response?.status;
     const requestUrl = originalRequest?.url || "";
 
     const isLoginRequest = requestUrl.includes("/login");
     const isRefreshRequest = requestUrl.includes("/refresh");
-    const isMeRequest = requestUrl.includes("/me");
     const isPasswordChangeRequest = requestUrl.includes("/change-password");
+    const isLogoutRequest = requestUrl.includes("/logout");
 
-    // ------------------------------------------------
-    // Login errors
-    // LoginForm handles these
-    // ------------------------------------------------
-
-    if (isLoginRequest) {
+    if (
+      status !== 401 ||
+      !originalRequest ||
+      originalRequest._retry ||
+      isLoginRequest ||
+      isRefreshRequest ||
+      isPasswordChangeRequest ||
+      isLogoutRequest
+    ) {
       return Promise.reject(error);
     }
 
-    // ------------------------------------------------
-    // Password change errors
-    // Password-change page handles these
-    // ------------------------------------------------
+    originalRequest._retry = true;
 
-    if (isPasswordChangeRequest) {
-      return Promise.reject(error);
-    }
-
-    // ------------------------------------------------
-    // /refresh itself should never trigger another
-    // refresh request
-    // ------------------------------------------------
-
-    if (isRefreshRequest) {
-      return Promise.reject(error);
-    }
-
-    // ------------------------------------------------
-    // /me is used by AuthProvider to determine whether
-    // a session exists.
-    //
-    // If /me fails, let AuthProvider handle it.
-    // DO NOT redirect or reload the browser here.
-    // ------------------------------------------------
-
-    if (isMeRequest) {
-      return Promise.reject(error);
-    }
-
-    // ------------------------------------------------
-    // Access token expired
-    // ------------------------------------------------
-
-    if (status === 401 && originalRequest && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        // Browser automatically sends refreshToken
-        // because withCredentials = true.
-
-        await API.post("/refresh");
-
-        // Backend has now created a new accessToken
-        // cookie.
-
-        return API(originalRequest);
-      } catch (refreshError) {
-        // Refresh failed.
-        //
-        // IMPORTANT:
-        // Do NOT redirect here.
-        // React/AuthProvider will decide what to do.
-
-        return Promise.reject(refreshError);
+    try {
+      if (!refreshPromise) {
+        refreshPromise = API.post("/refresh").finally(() => {
+          refreshPromise = null;
+        });
       }
-    }
 
-    return Promise.reject(error);
+      await refreshPromise;
+
+      // Retry the original request with the refreshed cookie.
+      return API(originalRequest);
+    } catch (refreshError) {
+      const refreshStatus = refreshError.response?.status;
+
+      // Only clear local auth state when the session is rejected.
+      if (refreshStatus === 401 || refreshStatus === 403) {
+        localStorage.removeItem("auth");
+        sessionStorage.removeItem("auth");
+
+        if (window.location.pathname !== "/login") {
+          window.location.assign("/login");
+        }
+      }
+
+      // For network errors or server errors, don't force logout.
+      return Promise.reject(refreshError);
+    }
   },
 );
 
