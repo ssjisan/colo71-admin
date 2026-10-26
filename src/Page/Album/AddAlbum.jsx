@@ -1,4 +1,4 @@
-import AddAblumForm from "../../Components/Album/AddAblumForm";
+import AddAblumForm from "../../Components/Album/Add/AddAblumForm";
 
 export default function AddAlbum() {
   return (

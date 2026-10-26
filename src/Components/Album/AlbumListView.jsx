@@ -23,6 +23,7 @@ import API from "../../api/axios";
 import CustomePopOver from "../Common/PopOver/CustomePopOver";
 import AlbumImageViewer from "./AlbumImageViewer";
 import { useNavigate } from "react-router-dom";
+import ConfirmationModal from "../Common/RemoveConfirmation/ConfirmationModal";
 export default function AlbumListView({ onViewAlbum, onDeleteAlbum }) {
   const navigate = useNavigate();
   const [albums, setAlbums] = useState([]);
@@ -34,7 +35,9 @@ export default function AlbumListView({ onViewAlbum, onDeleteAlbum }) {
 
   const [viewAlbum, setViewAlbum] = useState(null);
   const [viewerOpen, setViewerOpen] = useState(false);
-
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [deleteItem, setDeleteItem] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const open = Boolean(anchorEl);
 
   const fetchAlbums = useCallback(async () => {
@@ -112,7 +115,8 @@ export default function AlbumListView({ onViewAlbum, onDeleteAlbum }) {
       iconName: "Delete",
       onClick: () => {
         if (selectedAlbum) {
-          onDeleteAlbum?.(selectedAlbum);
+          setDeleteItem(selectedAlbum);
+          setOpenConfirm(true);
         }
         handleCloseMenu();
       },
@@ -160,7 +164,41 @@ export default function AlbumListView({ onViewAlbum, onDeleteAlbum }) {
 
     return Number.isNaN(date.getTime()) ? "—" : date.toLocaleDateString();
   };
+  const handleDelete = async () => {
+    if (!deleteItem?._id || deleting) return;
 
+    setDeleting(true);
+
+    try {
+      const response = await API.delete(`/delete-album/${deleteItem._id}`);
+
+      toast.success(response.data?.message || "Album deleted successfully.");
+
+      setAlbums((current) =>
+        current.filter((album) => album._id !== deleteItem._id),
+      );
+
+      setOpenConfirm(false);
+      setDeleteItem(null);
+
+      // Return to a valid page if the last album on this page was deleted.
+      setPage((currentPage) => {
+        const remainingCount = albums.length - 1;
+        const lastPage = Math.max(
+          0,
+          Math.ceil(remainingCount / rowsPerPage) - 1,
+        );
+
+        return Math.min(currentPage, lastPage);
+      });
+
+      onDeleteAlbum?.(deleteItem);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete album.");
+    } finally {
+      setDeleting(false);
+    }
+  };
   return (
     <Box>
       <Stack
@@ -333,6 +371,28 @@ export default function AlbumListView({ onViewAlbum, onDeleteAlbum }) {
         open={viewerOpen}
         album={viewAlbum}
         onClose={handleCloseViewer}
+      />
+      <ConfirmationModal
+        open={openConfirm}
+        title="Delete Album"
+        itemName={deleteItem?.name || deleteItem?.title || "Untitled album"}
+        message={
+          <>
+            Are you sure you want to delete{" "}
+            <strong>
+              &quot;{deleteItem?.name || deleteItem?.title || "Untitled album"}
+              &quot;
+            </strong>
+            ? This action cannot be undone.
+          </>
+        }
+        confirmLabel={deleting ? "Deleting..." : "Yes, Delete"}
+        onClose={() => {
+          if (deleting) return;
+          setOpenConfirm(false);
+          setDeleteItem(null);
+        }}
+        onConfirm={handleDelete}
       />
     </Box>
   );
