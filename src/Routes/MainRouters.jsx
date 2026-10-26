@@ -23,6 +23,9 @@ import ResetPassword from "../UserAuth/ResetPassword";
 import BlogEditor from "../Page/Blog/BlogEditor";
 import ScheduleManagement from "../Page/ScheduleManagement/ScheduleManagement";
 import FacilityVisitRequests from "../Page/ScheduleManagement/FacilityVisitRequests";
+import AddAlbum from "../Page/Album/AddAlbum";
+import AlbumList from "../Page/Album/AlbumList";
+import AlbumEdit from "../Page/Album/AlbumEdit";
 
 export default function MainRouters() {
   const { loading } = useContext(DataContext);
@@ -89,6 +92,10 @@ export default function MainRouters() {
                 path="/requested-schedule"
                 element={<FacilityVisitRequests />}
               />
+              {/* Albums/Gallery */}
+              <Route path="/add-album" element={<AddAlbum />} />
+              <Route path="/edit-album/:id" element={<AlbumEdit />} />
+              <Route path="/album-list" element={<AlbumList />} />
             </Route>
           </Route>
         </Route>
