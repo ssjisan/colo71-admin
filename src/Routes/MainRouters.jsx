@@ -25,10 +25,14 @@ import FacilityVisitRequests from "../Page/ScheduleManagement/FacilityVisitReque
 import AddAlbum from "../Page/Album/AddAlbum";
 import AlbumList from "../Page/Album/AlbumList";
 import AlbumEdit from "../Page/Album/AlbumEdit";
-import AllBlogsList from "../Components/Blog/AllBlogsList";
 import BlogPreview from "../Components/Blog/BlogPreview";
 import BlogCreate from "../Page/Blog/BlogCreate";
 import BlogEdit from "../Page/Blog/BlogEdit";
+import BlogList from "../Page/Blog/BlogList";
+import CaseStudyCreate from "../Page/CaseStudy/CaseStudyCreate";
+import CaseStudyEdit from "../Page/CaseStudy/CaseStudyEdit";
+import CaseStudyList from "../Page/CaseStudy/CaseStudyList";
+import CaseStudyPreviewPage from "../Page/CaseStudy/CaseStudyPreviewPage";
 
 export default function MainRouters() {
   const { loading } = useContext(DataContext);
@@ -82,12 +86,22 @@ export default function MainRouters() {
               <Route path="/user-settings/:id" element={<UserSettings />} />
               {/* Backup */}
               <Route path="/backup" element={<Backup />} />
-              {/* BLogs */}
-              {/* <Route path="/blogs" element={<BlogList />} /> */}
+
+              {/* Blogs */}
               <Route path="/create-blog" element={<BlogCreate />} />
               <Route path="/edit-blog/:id" element={<BlogEdit />} />
-              <Route path="/blogs" element={<AllBlogsList />} />
+              <Route path="/blogs" element={<BlogList />} />
               <Route path="/blog-preview/:id" element={<BlogPreview />} />
+
+              {/* Case Study */}
+              <Route path="/create-case-study" element={<CaseStudyCreate />} />
+              <Route path="/edit-case-study/:id" element={<CaseStudyEdit />} />
+              <Route path="/case-studies" element={<CaseStudyList />} />
+              <Route
+                path="/case-study-preview/:id"
+                element={<CaseStudyPreviewPage />}
+              />
+
               {/* Schedule */}
               <Route
                 path="/schedule-management"
@@ -101,7 +115,6 @@ export default function MainRouters() {
               <Route path="/add-album" element={<AddAlbum />} />
               <Route path="/edit-album/:id" element={<AlbumEdit />} />
               <Route path="/album-list" element={<AlbumList />} />
-              
             </Route>
           </Route>
         </Route>

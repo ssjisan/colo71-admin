@@ -11,7 +11,6 @@ const getImageDimensions = (file) =>
         width: image.naturalWidth,
         height: image.naturalHeight,
       });
-
       URL.revokeObjectURL(objectUrl);
     };
 
@@ -23,16 +22,23 @@ const getImageDimensions = (file) =>
     image.src = objectUrl;
   });
 
-export const useEditorUpload = ({
-  editor,
-  setUploadedImages,
-  sessionId,
-}) => {
+export const useEditorUpload = ({ editor, uploadConfig }) => {
   const handleImageUpload = async (file) => {
     if (!file) return;
 
-    if (!sessionId) {
-      throw new Error("The blog upload session is not ready.");
+    const {
+      uploadUrl,
+      sessionId,
+      sessionHeader,
+      imageField = "image",
+    } = uploadConfig || {};
+
+    if (!uploadUrl) {
+      throw new Error("Image upload is not configured for this editor.");
+    }
+
+    if (sessionHeader && !sessionId) {
+      throw new Error("The image upload session is not ready.");
     }
 
     if (!file.type.startsWith("image/")) {
@@ -44,43 +50,25 @@ export const useEditorUpload = ({
     }
 
     try {
-      // Read original dimensions before upload
       const dimensions = await getImageDimensions(file);
-
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append(imageField, file);
 
-      const response = await axios.post(
-        "/blogs/upload-session/editor-image",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            "x-upload-session-id": sessionId,
-          },
-        },
-      );
+      const headers = { "Content-Type": "multipart/form-data" };
+      if (sessionHeader) headers[sessionHeader] = sessionId;
 
+      const response = await axios.post(uploadUrl, formData, { headers });
       const { url, filename } = response.data?.data || {};
 
       if (!url || !filename) {
         throw new Error("Invalid editor image upload response.");
       }
 
-      // Insert image with its original dimensions
       insertImage(editor, url, filename, dimensions);
-
-      setUploadedImages?.((previous = []) => [
-        ...previous,
-        filename,
-      ]);
-
       return { url, filename, ...dimensions };
     } catch (error) {
       throw new Error(
-        error.response?.data?.message ||
-          error.message ||
-          "Image upload failed.",
+        error.response?.data?.message || error.message || "Image upload failed.",
       );
     }
   };

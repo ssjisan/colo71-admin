@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import BlogCreatePage from "../../Components/Blog/BlogCreatePage";
+import BlogCreatePage from "../../Components/Blog/Add/BlogCreatePage";
 
 export default function BlogCreate() {
   return (

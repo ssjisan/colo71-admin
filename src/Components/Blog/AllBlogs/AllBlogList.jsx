@@ -1,34 +1,24 @@
-import { useEffect, useState, useRef, useContext } from "react";
-import axios from "../../../api/axios";
+
+import { useCallback, useEffect, useRef, useState, useContext } from "react";
 import { Box, Table } from "@mui/material";
 import toast from "react-hot-toast";
+
+import axios from "../../../api/axios";
 import CustomeHeader from "../../Common/Table/CustomeHeader";
 import CustomePagination from "../../Common/Table/CustomePagination";
 import ConfirmationModal from "../../Common/RemoveConfirmation/ConfirmationModal";
 import Body from "./Body";
+
 import { hasPermission } from "../../../lib/hasPermission";
 import { DataContext } from "../../../DataProcessing/DataProcessing";
 
 export default function AllBlogList() {
   const { auth } = useContext(DataContext);
 
-  const [news, setNews] = useState([]);
+  const [blogs, setBlogs] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const canUpdate = hasPermission(
-    auth?.permissions,
-    "success-stories-editor",
-    "canUpdate",
-  );
-  const canDelete = hasPermission(
-    auth?.permissions,
-    "success-stories",
-    "canDelete",
-  );
-  const hasAnyAction = canUpdate || canDelete;
-
-  // popover + delete state
   const [open, setOpen] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,25 +27,58 @@ export default function AllBlogList() {
   const tableRef = useRef(null);
   const [tableWidth, setTableWidth] = useState("auto");
 
-  const loadNews = async () => {
-    try {
-      const res = await axios.get("/all-stories");
-      setNews(res.data || []);
-    } catch {
-      toast.error("Failed to load news");
-    }
-  };
+  // Permissions
+  const canUpdate = hasPermission(
+    auth?.permissions,
+    "edit-blog",
+    "canUpdate",
+  );
 
-  useEffect(() => {
-    loadNews();
+  const canDelete = hasPermission(
+    auth?.permissions,
+    "blogs",
+    "canDelete",
+  );
+
+  const hasAnyAction = canUpdate || canDelete;
+
+  // Fetch blogs
+  const loadBlogs = useCallback(async () => {
+    setLoading(true);
+
+    try {
+      const { data } = await axios.get("/blogs/admin", {
+        params: { page: 1, limit: 100 },
+      });
+
+      const result = data?.data;
+
+      setBlogs(
+        Array.isArray(result)
+          ? result
+          : result?.blogs || [],
+      );
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to load blogs.",
+      );
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    loadBlogs();
+  }, [loadBlogs]);
+
+  // Table width
   useEffect(() => {
     if (tableRef.current) {
       setTableWidth(tableRef.current.scrollWidth);
     }
-  }, [news, page, rowsPerPage]);
+  }, [blogs, page, rowsPerPage]);
 
+  // Action menu
   const handleOpenMenu = (event, row) => {
     setOpen(event.currentTarget);
     setSelectedRow(row);
@@ -65,30 +88,40 @@ export default function AllBlogList() {
     setOpen(null);
   };
 
+  // Delete blog
   const handleRemove = async () => {
     if (!selectedRow?._id) return;
 
     setLoading(true);
-    try {
-      await axios.delete(`/delete-stories/${selectedRow._id}`);
-      toast.success("Story deleted successfully");
 
-      setNews((prev) => prev.filter((item) => item._id !== selectedRow._id));
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to delete story");
-    } finally {
-      setLoading(false);
+    try {
+      await axios.delete(`/blogs/${selectedRow._id}`);
+
+      setBlogs((prev) =>
+        prev.filter((item) => item._id !== selectedRow._id),
+      );
+
+      toast.success("Blog deleted successfully.");
+
       setIsModalOpen(false);
       setSelectedRow(null);
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to delete blog.",
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   const columns = [
     { key: "title", label: "Title" },
+    { key: "published", label: "Published" },
+    { key: "featured", label: "Featured" },
     { key: "createdAt", label: "Created at" },
   ];
 
-  const paginatedNews = news.slice(
+  const paginatedBlogs = blogs.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage,
   );
@@ -105,10 +138,14 @@ export default function AllBlogList() {
     >
       <Box ref={tableRef} sx={{ overflowX: "auto" }}>
         <Table>
-          <CustomeHeader columns={columns} includeActions includeDrag={false} />
+          <CustomeHeader
+            columns={columns}
+            includeActions={hasAnyAction}
+            includeDrag={false}
+          />
 
           <Body
-            news={paginatedNews}
+            blogs={paginatedBlogs}
             open={open}
             selectedRow={selectedRow}
             handleOpenMenu={handleOpenMenu}
@@ -124,7 +161,7 @@ export default function AllBlogList() {
       {/* Pagination */}
       <Box sx={{ width: tableWidth, overflowX: "auto" }}>
         <CustomePagination
-          count={news.length}
+          count={blogs.length}
           page={page}
           setPage={setPage}
           rowsPerPage={rowsPerPage}
@@ -132,12 +169,15 @@ export default function AllBlogList() {
         />
       </Box>
 
-      {/* Delete Confirmation */}
+      {/* Delete confirmation */}
       <ConfirmationModal
         open={isModalOpen}
-        title="Delete success stories"
+        title="Delete blog"
         itemName={selectedRow?.title}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedRow(null);
+        }}
         onConfirm={handleRemove}
         loading={loading}
       />

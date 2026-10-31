@@ -5,16 +5,15 @@ import { Editable } from "slate-react";
 import EditorElement from "./EditorElement";
 import EditorLeaf from "./EditorLeaf";
 
-const EditorContent = ({ editor, sessionId }) => {
+const EditorContent = ({ editor, uploadConfig }) => {
   const renderElement = useCallback(
-    (props) => <EditorElement {...props} editor={editor} sessionId={sessionId} />,
-    [editor]
+    (props) => (
+      <EditorElement {...props} editor={editor} uploadConfig={uploadConfig} />
+    ),
+    [editor, uploadConfig],
   );
 
-  const renderLeaf = useCallback(
-    (props) => <EditorLeaf {...props} />,
-    []
-  );
+  const renderLeaf = useCallback((props) => <EditorLeaf {...props} />, []);
 
   const handleKeyDown = (event) => {
     if (event.key === "Enter" && event.shiftKey) {
@@ -55,7 +54,7 @@ const EditorContent = ({ editor, sessionId }) => {
 
 EditorContent.propTypes = {
   editor: PropTypes.object.isRequired,
-  sessionId: PropTypes.string,
+  uploadConfig: PropTypes.object,
 };
 
 export default EditorContent;

@@ -3,26 +3,43 @@ import { useSelected, useFocused, ReactEditor } from "slate-react";
 import { Transforms } from "slate";
 import axios from "../../../api/axios";
 import toast from "react-hot-toast";
-import { resolveBlogAssetUrl } from "../utils/blogAssetUrl";
+import { resolveAssetUrl } from "../utils/assetUrl";
 
-const ImageElement = ({ attributes, children, element, editor, sessionId }) => {
+const ImageElement = ({
+  attributes,
+  children,
+  element,
+  editor,
+  uploadConfig,
+}) => {
   const selected = useSelected();
   const focused = useFocused();
 
   const removeImage = async () => {
     const path = ReactEditor.findPath(editor, element);
-
-    // Remove the image from the editor first.
     Transforms.removeNodes(editor, { at: path });
 
-    if (!element.filename || !element.url?.includes("/file-storage/blog/temp/"))
+    const { deleteUrl, sessionHeader, sessionId, temporaryPath } =
+      uploadConfig || {};
+    const isTemporaryImage =
+      typeof temporaryPath === "string" &&
+      temporaryPath.length > 0 &&
+      typeof element.url === "string" &&
+      element.url.includes(temporaryPath);
+
+    if (
+      !element.filename ||
+      !isTemporaryImage ||
+      typeof deleteUrl !== "function"
+    ) {
       return;
+    }
 
     try {
-      await axios.delete(
-        `/blogs/upload-session/editor-image/${encodeURIComponent(element.filename)}`,
-        { headers: { "x-upload-session-id": sessionId } },
-      );
+      const headers = {};
+      if (sessionHeader) headers[sessionHeader] = sessionId;
+
+      await axios.delete(deleteUrl(element.filename), { headers });
     } catch (error) {
       toast.error(
         error.response?.data?.message || "Could not remove temporary image.",
@@ -35,7 +52,6 @@ const ImageElement = ({ attributes, children, element, editor, sessionId }) => {
 
     const startX = event.clientX;
     const imageElement = event.currentTarget.parentElement.querySelector("img");
-
     if (!imageElement) return;
 
     const startWidth = imageElement.offsetWidth;
@@ -45,7 +61,6 @@ const ImageElement = ({ attributes, children, element, editor, sessionId }) => {
 
       try {
         const path = ReactEditor.findPath(editor, element);
-
         Transforms.setNodes(editor, { width: newWidth }, { at: path });
       } catch (error) {
         console.error("Image resize failed:", error);
@@ -73,7 +88,7 @@ const ImageElement = ({ attributes, children, element, editor, sessionId }) => {
       >
         <div style={{ display: "inline-block", position: "relative" }}>
           <img
-            src={resolveBlogAssetUrl(element.url)}
+            src={resolveAssetUrl(element.url)}
             alt=""
             style={{
               display: "block",
@@ -124,7 +139,6 @@ const ImageElement = ({ attributes, children, element, editor, sessionId }) => {
           )}
         </div>
       </div>
-
       {children}
     </div>
   );
@@ -135,7 +149,7 @@ ImageElement.propTypes = {
   children: PropTypes.node,
   element: PropTypes.object.isRequired,
   editor: PropTypes.object.isRequired,
-  sessionId: PropTypes.string,
+  uploadConfig: PropTypes.object,
 };
 
 export default ImageElement;

@@ -4,14 +4,18 @@ import {
   TableCell,
   IconButton,
   Tooltip,
+  Chip,
+  Typography,
 } from "@mui/material";
+
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
+
 import CustomePopOver from "../../Common/PopOver/CustomePopOver";
 import Icon from "../../Icon";
 
 export default function Body({
-  news,
+  blogs,
   open,
   selectedRow,
   handleOpenMenu,
@@ -19,47 +23,91 @@ export default function Body({
   setIsModalOpen,
   canUpdate,
   canDelete,
+  hasAnyAction,
 }) {
   const navigate = useNavigate();
 
   const formatDate = (dateStr) => {
-    if (!dateStr) return "";
-    const d = new Date(dateStr);
-    return `${String(d.getDate()).padStart(2, "0")}-${String(
-      d.getMonth() + 1,
-    ).padStart(2, "0")}-${d.getFullYear()}`;
+    if (!dateStr) return "—";
+
+    const date = new Date(dateStr);
+
+    if (Number.isNaN(date.getTime())) return "—";
+
+    return `${String(date.getDate()).padStart(2, "0")}-${String(
+      date.getMonth() + 1,
+    ).padStart(2, "0")}-${date.getFullYear()}`;
   };
+
+  const StatusChip = ({
+    active,
+    activeLabel = "On",
+    inactiveLabel = "Off",
+  }) => (
+    <Chip
+      size="small"
+      label={active ? activeLabel : inactiveLabel}
+      color={active ? "success" : "default"}
+      variant="outlined"
+    />
+  );
 
   return (
     <>
       <TableBody>
-        {news.map((item) => (
-          <TableRow key={item._id}>
-            <TableCell
-              sx={{
-                maxWidth: 300,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {item.title}
-            </TableCell>
+        {blogs.map((blog) => {
+          const isPublished =
+            Boolean(blog.published) || blog.status === "published";
 
-            <TableCell>{formatDate(item.createdAt)}</TableCell>
+          const isFeatured = Boolean(blog.featured);
 
-            <TableCell align="center">
-              <Tooltip title="Actions">
-                <IconButton onClick={(e) => handleOpenMenu(e, item)}>
-                  <Icon name="more" size={24} color="#919EAB" />
-                </IconButton>
-              </Tooltip>
-            </TableCell>
-          </TableRow>
-        ))}
+          return (
+            <TableRow key={blog._id} hover>
+              {/* Blog title */}
+              <TableCell
+                sx={{
+                  maxWidth: 350,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                <Typography variant="body2" fontWeight={600}>
+                  {blog.title || "Untitled"}
+                </Typography>
+              </TableCell>
+
+              {/* Published */}
+              <TableCell>
+                <StatusChip active={isPublished} />
+              </TableCell>
+
+              {/* Featured */}
+              <TableCell>
+                <StatusChip active={isFeatured} />
+              </TableCell>
+
+              {/* Created date */}
+              <TableCell>{formatDate(blog.createdAt)}</TableCell>
+
+              {/* Actions */}
+              {hasAnyAction && (
+                <TableCell align="center">
+                  <Tooltip title="Actions">
+                    <IconButton
+                      onClick={(event) => handleOpenMenu(event, blog)}
+                    >
+                      <Icon name="more" size={24} color="#919EAB" />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+              )}
+            </TableRow>
+          );
+        })}
       </TableBody>
 
-      {/* Action Menu */}
+      {/* Action menu */}
       <CustomePopOver
         open={Boolean(open)}
         anchorEl={open}
@@ -69,22 +117,24 @@ export default function Body({
             label: "Preview",
             iconName: "EyeBold",
             onClick: () => {
-              navigate(`/success-stories-preview/${selectedRow?._id}`);
+              navigate(`/blog-preview/${selectedRow?._id}`);
               handleCloseMenu();
             },
           },
+
           ...(canUpdate
             ? [
                 {
                   label: "Edit",
                   iconName: "Edit",
                   onClick: () => {
-                    navigate(`/success-stories-editor/${selectedRow?._id}`);
+                    navigate(`/edit-blog/${selectedRow?._id}`);
                     handleCloseMenu();
                   },
                 },
               ]
             : []),
+
           ...(canDelete
             ? [
                 {
@@ -105,13 +155,19 @@ export default function Body({
 }
 
 Body.propTypes = {
-  news: PropTypes.array.isRequired,
+  blogs: PropTypes.array.isRequired,
   open: PropTypes.any,
   selectedRow: PropTypes.object,
   handleOpenMenu: PropTypes.func.isRequired,
   handleCloseMenu: PropTypes.func.isRequired,
   setIsModalOpen: PropTypes.func.isRequired,
-  canUpdate: PropTypes.func.isRequired,
-  canDelete: PropTypes.func.isRequired,
-  hasAnyAction: PropTypes.func.isRequired,
+  canUpdate: PropTypes.bool,
+  canDelete: PropTypes.bool,
+  hasAnyAction: PropTypes.bool,
+};
+
+Body.defaultProps = {
+  canUpdate: false,
+  canDelete: false,
+  hasAnyAction: false,
 };

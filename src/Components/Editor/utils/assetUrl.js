@@ -1,6 +1,6 @@
 import axios from "../../../api/axios";
 
-export const resolveBlogAssetUrl = (url) => {
+export const resolveAssetUrl = (url) => {
   if (typeof url !== "string" || !url) return "";
   if (/^(https?:|blob:|data:)/i.test(url)) return url;
 

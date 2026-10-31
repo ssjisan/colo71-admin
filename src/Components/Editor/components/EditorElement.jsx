@@ -7,6 +7,7 @@ const EditorElement = ({
   element,
   editor,
   onRemoveImage,
+  uploadConfig,
 }) => {
   const combinedStyle = {
     margin: "0 0 10px 0",
@@ -22,6 +23,7 @@ const EditorElement = ({
           element={element}
           editor={editor}
           onRemoveImage={onRemoveImage}
+          uploadConfig={uploadConfig}
         >
           {children}
         </ImageElement>
@@ -83,6 +85,7 @@ EditorElement.propTypes = {
   element: PropTypes.object.isRequired,
   editor: PropTypes.object.isRequired,
   onRemoveImage: PropTypes.func,
+  uploadConfig: PropTypes.object,
 };
 
 export default EditorElement;

@@ -24,19 +24,14 @@ import { useEditorUpload } from "./hooks/useEditorUpload";
 
 import "./styles/editor.css";
 
-const Editor = ({ value, onChangeValue, setUploadedImages, sessionId }) => {
+const Editor = ({ value, onChangeValue, uploadConfig }) => {
   const editor = useMemo(
     () => withImages(withHistory(withReact(createEditor()))),
     [],
   );
 
   const initialValue = useMemo(() => createInitialValue(value), []);
-
-  const { handleImageUpload } = useEditorUpload({
-    editor,
-    setUploadedImages,
-    sessionId,
-  });
+  const { handleImageUpload } = useEditorUpload({ editor, uploadConfig });
 
   const handleChange = (newValue) => {
     if (onChangeValue) {
@@ -52,18 +47,19 @@ const Editor = ({ value, onChangeValue, setUploadedImages, sessionId }) => {
         initialValue={initialValue}
         onChange={handleChange}
       >
-        <EditorToolbar
-          editor={editor}
-          toggleMark={toggleMark}
-          toggleBlock={toggleBlock}
-          toggleAlign={toggleAlign}
-          isMarkActive={isMarkActive}
-          isBlockActive={isBlockActive}
-          isAlignActive={isAlignActive}
-          handleImageUpload={handleImageUpload}
-        />
-
-        <EditorContent editor={editor} sessionId={sessionId} />
+        <div className="editor-toolbar">
+          <EditorToolbar
+            editor={editor}
+            toggleMark={toggleMark}
+            toggleBlock={toggleBlock}
+            toggleAlign={toggleAlign}
+            isMarkActive={isMarkActive}
+            isBlockActive={isBlockActive}
+            isAlignActive={isAlignActive}
+            handleImageUpload={handleImageUpload}
+          />
+        </div>
+        <EditorContent editor={editor} uploadConfig={uploadConfig} />
       </Slate>
     </div>
   );
@@ -72,9 +68,14 @@ const Editor = ({ value, onChangeValue, setUploadedImages, sessionId }) => {
 Editor.propTypes = {
   value: PropTypes.array,
   onChangeValue: PropTypes.func,
-  uploadedImages: PropTypes.array,
-  setUploadedImages: PropTypes.func,
-  sessionId: PropTypes.string,
+  uploadConfig: PropTypes.shape({
+    uploadUrl: PropTypes.string,
+    deleteUrl: PropTypes.func,
+    sessionHeader: PropTypes.string,
+    sessionId: PropTypes.string,
+    imageField: PropTypes.string,
+    temporaryPath: PropTypes.string,
+  }),
 };
 
 export default Editor;
