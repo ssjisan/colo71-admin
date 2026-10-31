@@ -1,0 +1,19 @@
+.rich-editor {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 12px 12px 12px 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.rich-editor [data-slate-editor="true"] {
+  min-height: 200px;
+  outline: none;
+}
+
+.rich-editor [data-slate-placeholder="true"] {
+  pointer-events: none;
+}
+
+.rich-editor img {
+  max-width: 100%;
+}
